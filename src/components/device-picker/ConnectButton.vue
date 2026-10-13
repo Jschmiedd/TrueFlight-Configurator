@@ -42,10 +42,21 @@
             @click="isConnected ? onDisconnectClick() : onConnectClick()"
         >
             <span class="tg-connect__circle">
-                <UIcon
-                    :name="connecting ? 'i-lucide-loader-circle' : isConnected ? 'i-lucide-power-off' : 'i-lucide-power'"
-                    :class="{ 'animate-spin': connecting }"
-                />
+                <UIcon v-if="connecting" name="i-lucide-loader-circle" class="animate-spin" />
+                <!-- USB trident logo -->
+                <svg v-else class="tg-connect__usb" viewBox="0 0 24 24" aria-hidden="true">
+                    <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round">
+                        <path d="M4 12h14.5" />
+                        <path d="M7.5 12l3-4.5h3.2" />
+                        <path d="M10 12l3 4.5h2" />
+                    </g>
+                    <g fill="currentColor">
+                        <circle cx="3.6" cy="12" r="2.1" />
+                        <path d="M17.6 9.6 22.4 12l-4.8 2.4z" />
+                        <rect x="13.4" y="5.9" width="3.2" height="3.2" />
+                        <circle cx="16.4" cy="16.5" r="1.7" />
+                    </g>
+                </svg>
             </span>
             <span class="tg-connect__text">{{
                 connecting ? $t("connecting") : isConnected ? $t("disconnect") : $t("connect")
@@ -383,6 +394,10 @@ export default defineComponent({
 .tg-connect__select {
     width: 16rem;
     justify-content: space-between;
+}
+.tg-connect__usb {
+    width: 1.9rem;
+    height: 1.9rem;
 }
 .tg-connect__round {
     display: flex;
