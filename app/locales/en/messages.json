@@ -10715,5 +10715,8 @@
     },
     "tfLandingModelsNote": {
         "message": "Flash a single file of your choice; you can switch at any time."
+    },
+    "tgPortChoose": {
+        "message": "Select a port"
     }
 }
