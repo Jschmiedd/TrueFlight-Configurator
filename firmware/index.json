@@ -1,0 +1,62 @@
+{
+ "format": 1,
+ "version": "2026.6.2",
+ "revision": "014242092",
+ "date": "2026-10-13",
+ "files": [
+  {
+   "model": "STANDARD",
+   "version": "2026.6.2",
+   "mcu": "STM32F405",
+   "board": "SPEEDYBEEF405MINI",
+   "file": "STANDARD/trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex.gz",
+   "size": 1543671,
+   "sha256": "6d89aff3f9ca31e05a9d8bbf410e5cb592b048ad60b592e31407e4603bc41c1c"
+  },
+  {
+   "model": "TRUENAV",
+   "version": "2026.6.2",
+   "mcu": "STM32F405",
+   "board": "SPEEDYBEEF405MINI",
+   "file": "TRUENAV/truenav_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex.gz",
+   "size": 1619574,
+   "sha256": "9fb430acc0021bd1df9710f9905143c82d1bb3fbacb3a5c54d6a67c9e528ff4a"
+  },
+  {
+   "model": "TRUENAV_LIGHT",
+   "version": "2026.6.2",
+   "mcu": "STM32F405",
+   "board": "SPEEDYBEEF405MINI",
+   "file": "TRUENAV_LIGHT/truenav_light_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex.gz",
+   "size": 1596620,
+   "sha256": "f66361ea76f4c68b9f82abe059fc0a20b715d10a2229a5cbee74aaacd6684be9"
+  },
+  {
+   "model": "STANDARD",
+   "version": "2026.6.2",
+   "mcu": "STM32F722",
+   "board": "TMOTORVELOXF7SE",
+   "file": "STANDARD/trueglide_2026.6.2_STM32F722_TMOTORVELOXF7SE.hex.gz",
+   "size": 1096970,
+   "sha256": "d58b9bb875555aaae2f797d49bb144017e05d9e94604fee04d1a7abe081d070a"
+  },
+  {
+   "model": "TRUENAV",
+   "version": "2026.6.2",
+   "mcu": "STM32F722",
+   "board": "TMOTORVELOXF7SE",
+   "file": "TRUENAV/truenav_2026.6.2_STM32F722_TMOTORVELOXF7SE.hex.gz",
+   "size": 1361926,
+   "sha256": "ca4740640129929cd5fc1e450e9637f152be0958435f4cdc1e5f67746f5270a7"
+  },
+  {
+   "model": "TRUENAV_LIGHT",
+   "version": "2026.6.2",
+   "mcu": "STM32F722",
+   "board": "TMOTORVELOXF7SE",
+   "file": "TRUENAV_LIGHT/truenav_light_2026.6.2_STM32F722_TMOTORVELOXF7SE.hex.gz",
+   "size": 1349920,
+   "sha256": "67212ded39cf3a19e801b2b72c068e5cb9ca6f0ddd4e06b2d953991c4eddec4c"
+  }
+ ]
+}
