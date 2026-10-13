@@ -33,7 +33,7 @@
                     <!-- TrueGlide: connection and tools at the top right (desktop); in the sidebar on phones -->
                     <div v-show="!isCompactBreakpoint" class="tf-topbar">
                         <div id="tf-topbar-tools" class="tf-topbar__tools"></div>
-                        <ConnectButton v-if="!isCompactBreakpoint" class="tf-topbar__connect" menu-side="bottom" size="lg" />
+                        <ConnectButton v-if="!isCompactBreakpoint" class="tf-topbar__connect" menu-side="bottom" round />
                     </div>
                     <SetupGuideBar />
                     <div id="content" @scroll.passive="onContentScroll">
@@ -253,7 +253,7 @@ watch(
     border-bottom: 1px solid var(--surface-200);
 }
 .tf-topbar__connect {
-    width: 17rem;
+    width: auto;
 }
 
 /* Legacy cache node is required by some code paths but should never be visible in Vue UI */

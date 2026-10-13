@@ -1,5 +1,65 @@
 <template>
-    <div class="sidebar-connect">
+    <!-- TrueGlide: top bar layout, port choice then two round buttons (firmware update, connect) -->
+    <div v-if="round" class="tg-connect">
+        <div class="tg-connect__port">
+            <UDropdownMenu
+                :items="menuItems"
+                :content="{ align: 'start', side: menuSide }"
+                :ui="{ content: 'max-h-96 z-[2100]' }"
+            >
+                <UButton
+                    color="neutral"
+                    variant="outline"
+                    size="md"
+                    icon="i-lucide-usb"
+                    trailing-icon="i-lucide-chevrons-up-down"
+                    class="tg-connect__select"
+                    :ui="{ leadingIcon: 'text-primary' }"
+                    :disabled="isConnected || devicePickerDisabled"
+                >
+                    <span class="sidebar-connect__label">{{ portLabel }}</span>
+                </UButton>
+            </UDropdownMenu>
+            <USwitch
+                :model-value="devicePicker.autoConnect"
+                size="sm"
+                :label="$t('autoConnect')"
+                @update:model-value="toggleAutoConnect"
+            />
+        </div>
+        <button type="button" class="tg-connect__round" :disabled="connecting" @click="openFlasher">
+            <span class="tg-connect__circle">
+                <UIcon name="i-lucide-microchip" />
+                <span class="tg-connect__badge"><UIcon name="i-lucide-arrow-down" /></span>
+            </span>
+            <span class="tg-connect__text">{{ $t("tabFirmwareFlasher") }}</span>
+        </button>
+        <button
+            type="button"
+            class="tg-connect__round"
+            :class="{ 'is-connected': isConnected, 'is-connecting': connecting }"
+            :disabled="devicePickerDisabled && !isConnected"
+            @click="isConnected ? onDisconnectClick() : onConnectClick()"
+        >
+            <span class="tg-connect__circle">
+                <UIcon
+                    :name="connecting ? 'i-lucide-loader-circle' : isConnected ? 'i-lucide-unplug' : 'i-lucide-cable'"
+                    :class="{ 'animate-spin': connecting }"
+                />
+            </span>
+            <span class="tg-connect__text">{{
+                connecting ? $t("connecting") : isConnected ? $t("disconnect") : $t("connect")
+            }}</span>
+        </button>
+        <ConnectOptionsDialog
+            v-model="dialogOpen"
+            :mode="dialogMode"
+            :initial-version="devicePicker.virtualMspVersion"
+            :initial-port-override="devicePicker.portOverride"
+            @confirm="onDialogConfirm"
+        />
+    </div>
+    <div v-else class="sidebar-connect">
         <UButton
             v-if="isConnected"
             block
@@ -62,6 +122,7 @@ import { i18n } from "../../js/localization";
 import { set as setConfig } from "../../js/ConfigStorage";
 import { isExpertModeEnabled } from "../../js/utils/isExpertModeEnabled";
 import ConnectOptionsDialog from "./ConnectOptionsDialog.vue";
+import GUI from "../../js/gui";
 
 function selectAndConnect(path) {
     DeviceHandler.devicePicker.selectedDevice = path;
@@ -93,6 +154,8 @@ export default defineComponent({
         menuSide: { type: String, default: "top" },
         // TrueGlide: bigger button in the top bar
         size: { type: String, default: "sm" },
+        // TrueGlide: top bar layout with round buttons
+        round: { type: Boolean, default: false },
     },
     setup() {
         const connectionStore = useConnectionStore();
@@ -233,6 +296,31 @@ export default defineComponent({
             return items;
         });
 
+        const portLabel = computed(() => {
+            // Once connected, show the port actually in use (the selection may have been reset)
+            if (isConnected.value && connectedTo.value && !isVirtualMode.value) {
+                const all = [...serialPorts.value, ...usbPorts.value, ...bluetoothPorts.value];
+                return all.find((d) => d.path === connectedTo.value)?.displayName ?? connectedTo.value;
+            }
+            if (selectedDevice.value === "virtual" || (isConnected.value && isVirtualMode.value)) {
+                return i18n.getMessage("portsSelectVirtual");
+            }
+            if (selectedDevice.value === "manual") {
+                return i18n.getMessage("portsSelectManual");
+            }
+            return selectedDisplayName.value ?? i18n.getMessage("tgPortChoose");
+        });
+
+        // Firmware update: the flasher needs the port free, so a connected board is disconnected first
+        function openFlasher() {
+            if (isConnected.value || connecting.value) {
+                GUI.pendingTab = "firmware_flasher";
+                connectDisconnect();
+                return;
+            }
+            import("../../js/tab_switch").then(({ switchTab }) => switchTab("firmware_flasher", { mode: "disconnected" }));
+        }
+
         async function onConnectClick() {
             if (devicePickerDisabled.value) {
                 return;
@@ -272,6 +360,9 @@ export default defineComponent({
             devicePicker,
             onConnectClick,
             onDisconnectClick: disconnect,
+            portLabel,
+            openFlasher,
+            toggleAutoConnect,
             onDialogConfirm,
         };
     },
@@ -279,6 +370,96 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.tg-connect {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+.tg-connect__port {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.tg-connect__select {
+    width: 16rem;
+    justify-content: space-between;
+}
+.tg-connect__round {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: flex-start;
+    gap: 0.3rem;
+    width: 6.5rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--ui-text-muted);
+}
+.tg-connect__round:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+/* Same look as the TrueGlide badge: dark disc, primary ring and glow */
+.tg-connect__circle {
+    --tg-ring: var(--ui-primary);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 999px;
+    border: 2px solid var(--tg-ring);
+    background: radial-gradient(circle at 50% 35%, var(--ui-bg-elevated), var(--ui-bg) 75%);
+    color: var(--tg-ring);
+    font-size: 1.55rem;
+    box-shadow:
+        0 0 0.6rem color-mix(in srgb, var(--tg-ring) 45%, transparent),
+        inset 0 0 0.5rem color-mix(in srgb, var(--tg-ring) 20%, transparent);
+    transition:
+        transform 0.12s,
+        background 0.12s,
+        color 0.12s,
+        box-shadow 0.12s;
+}
+.tg-connect__badge {
+    position: absolute;
+    right: -0.2rem;
+    bottom: -0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 999px;
+    background-color: var(--tg-ring);
+    color: var(--ui-bg);
+    font-size: 0.85rem;
+    border: 2px solid var(--ui-bg);
+}
+.tg-connect__round:not(:disabled):hover .tg-connect__circle {
+    transform: scale(1.06);
+    background: var(--tg-ring);
+    color: var(--ui-bg);
+    box-shadow: 0 0 1rem color-mix(in srgb, var(--tg-ring) 60%, transparent);
+}
+.tg-connect__round:not(:disabled):hover {
+    color: var(--ui-text);
+}
+.tg-connect__round.is-connecting .tg-connect__circle {
+    --tg-ring: var(--ui-warning);
+}
+.tg-connect__round.is-connected .tg-connect__circle {
+    --tg-ring: var(--ui-error);
+}
+.tg-connect__text {
+    min-height: 2.2em;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: center;
+}
 .sidebar-connect {
     padding: 0.5rem 0;
 }

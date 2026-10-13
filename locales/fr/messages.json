@@ -10817,5 +10817,8 @@
     },
     "tfLandingModelsNote": {
         "message": "Un seul fichier à flasher, au choix ; on peut changer à tout moment."
+    },
+    "tgPortChoose": {
+        "message": "Choisir un port"
     }
 }
