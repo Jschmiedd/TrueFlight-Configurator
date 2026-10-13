@@ -1,0 +1,143 @@
+// TrueGlide Configurator - Copyright (C) 2026 TalkTrueFPV. Derived from Betaflight App.
+// Free software under the GPL-3.0 license, WITHOUT ANY WARRANTY; see the LICENSE file.
+// @vitest-environment node
+import { gzipSync } from "node:zlib";
+import { createHash } from "node:crypto";
+import { describe, expect, it } from "vitest";
+import {
+    TRUEGLIDE_FIRMWARE_URL,
+    checkTrueGlideFirmwareFile,
+    downloadFirmware,
+    fetchFirmwareIndex,
+    findFirmware,
+    firmwareBaseUrl,
+    indexBoards,
+    installedStatus,
+    isOnlineFirmwareSourceEnabled,
+    modelFromBuildOptions,
+    parseFirmwareIndex,
+    parseTrueGlideFirmwareName,
+} from "../../src/js/trueglide/firmware_source.js";
+
+describe("TrueGlide firmware source", () => {
+    it("publie la mise à jour en ligne à côté de l'application (GitHub Pages)", () => {
+        expect(TRUEGLIDE_FIRMWARE_URL).toBe("https://jschmiedd.github.io/TrueGlide-Configurator/firmware/");
+        expect(firmwareBaseUrl()).toBe(TRUEGLIDE_FIRMWARE_URL);
+        expect(isOnlineFirmwareSourceEnabled()).toBe(true);
+    });
+
+    it.each([
+        ["trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex", "STANDARD", "STM32F405", "SPEEDYBEEF405MINI"],
+        ["truenav_2026.6.2_STM32H743_MATEKH743.hex", "TRUENAV", "STM32H743", "MATEKH743"],
+        ["truenav_light_2026.6.2_STM32F722_SPEEDYBEEF7V3.hex", "TRUENAV_LIGHT", "STM32F722", "SPEEDYBEEF7V3"],
+        ["truenav_leger_2026.6.2_STM32F722_SPEEDYBEEF7V3.hex", "TRUENAV_LIGHT", "STM32F722", "SPEEDYBEEF7V3"],
+        ["trueflight_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex", "STANDARD", "STM32F405", "SPEEDYBEEF405MINI"],
+        ["trueglide_2026.6.2_AT32F435G_BAYCK_DOLPHIN_MINI.hex", "STANDARD", "AT32F435G", "BAYCK_DOLPHIN_MINI"],
+        ["TRUEGLIDE_2026.6.2_STM32F405_FOO.HEX", "STANDARD", "STM32F405", "FOO"],
+    ])("reconnaît %s", (name, model, mcu, board) => {
+        const parsed = parseTrueGlideFirmwareName(name);
+        expect(parsed).toEqual({ isTrueGlide: true, model, version: "2026.6.2", mcu, board });
+    });
+
+    it("ignore le chemin du fichier", () => {
+        const parsed = parseTrueGlideFirmwareName("/home/x/obj/truenav_2026.6.2_STM32F405_FOO.hex");
+        expect(parsed.model).toBe("TRUENAV");
+        expect(parsed.board).toBe("FOO");
+    });
+
+    it.each([
+        "betaflight_4.5.2_STM32F405_SPEEDYBEEF405MINI.hex",
+        "SPEEDYBEEF405MINI.hex",
+        "my_trueglide_2026.6.2_STM32F405_FOO.hex",
+        "truenavleger_2026.6.2_STM32F405_FOO.hex",
+        "",
+        undefined,
+    ])("signale %s comme non TrueGlide", (name) => {
+        expect(checkTrueGlideFirmwareFile(name).isTrueGlide).toBe(false);
+    });
+
+    it("ne signale pas de carte différente sans carte détectée localement", () => {
+        const check = checkTrueGlideFirmwareFile("trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex", "");
+        expect(check.connectedBoard).toBeNull();
+        expect(check.boardMismatch).toBe(false);
+    });
+
+    it("signale une carte différente de la carte détectée (sans tenir compte de la casse)", () => {
+        const name = "trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex";
+        expect(checkTrueGlideFirmwareFile(name, "MATEKF405").boardMismatch).toBe(true);
+        expect(checkTrueGlideFirmwareFile(name, "speedybeef405mini").boardMismatch).toBe(false);
+    });
+
+    it("ne compare pas la carte quand le nom ne contient pas de carte", () => {
+        expect(checkTrueGlideFirmwareFile("trueglide_2026.6.2.hex", "MATEKF405").boardMismatch).toBe(false);
+        expect(checkTrueGlideFirmwareFile("firmware.hex", "MATEKF405").boardMismatch).toBe(false);
+    });
+});
+
+describe("TrueGlide mise à jour en ligne", () => {
+    const hex = ":020000040800F2\r\n:00000001FF\r\n";
+    const bytes = Buffer.from(hex, "ascii");
+    const entry = {
+        model: "STANDARD",
+        version: "2026.6.2",
+        mcu: "STM32F405",
+        board: "SPEEDYBEEF405MINI",
+        file: "STANDARD/trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex.gz",
+        size: bytes.length,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+    };
+    const manifest = {
+        format: 1,
+        version: "2026.6.2",
+        revision: "c47d196f3",
+        date: "2026-10-12",
+        files: [entry, { ...entry, model: "TRUENAV", file: "TRUENAV/../../etc.hex.gz" }, { board: "X" }],
+    };
+    const fakeFetch = (routes) => async (url) => {
+        const body = routes[url];
+        return body === undefined
+            ? new Response("", { status: 404 })
+            : new Response(typeof body === "string" ? body : new Uint8Array(body));
+    };
+    const base = "https://exemple.test/firmware/";
+
+    it("lit le manifeste et écarte les entrées incomplètes ou hors du dossier", () => {
+        const index = parseFirmwareIndex(manifest);
+        expect(index.files).toEqual([entry]);
+        expect(indexBoards(index)).toEqual(["SPEEDYBEEF405MINI"]);
+        expect(findFirmware(index, "speedybeef405mini", "STANDARD")).toEqual(entry);
+        expect(findFirmware(index, "SPEEDYBEEF405MINI", "TRUENAV")).toBeNull();
+        expect(() => parseFirmwareIndex({ format: 2 })).toThrow();
+    });
+
+    it("compare la révision installée (7 caractères) à la révision publiée (9)", () => {
+        const index = parseFirmwareIndex(manifest);
+        expect(installedStatus(index, { isTrueGlide: true, revision: "c47d196" })).toBe("current");
+        expect(installedStatus(index, { isTrueGlide: true, revision: "0355fa9" })).toBe("update");
+        expect(installedStatus(index, { isTrueGlide: false, revision: "c47d196" })).toBe("other");
+        expect(installedStatus(index, { isTrueGlide: true, revision: "" })).toBe("other");
+    });
+
+    it("reconnaît le modèle installé", () => {
+        expect(modelFromBuildOptions(["USE_GPS", "USE_FLIGHT_PLAN"])).toBe("TRUENAV");
+        expect(modelFromBuildOptions(["USE_GPS"])).toBe("STANDARD");
+        expect(modelFromBuildOptions(undefined)).toBe("STANDARD");
+    });
+
+    it("télécharge, décompresse et vérifie le firmware", async () => {
+        const fetchImpl = fakeFetch({
+            [`${base}index.json`]: JSON.stringify(manifest),
+            [`${base}${entry.file}`]: gzipSync(bytes),
+        });
+        const index = await fetchFirmwareIndex({ fetchImpl, baseUrl: base });
+        const firmware = await downloadFirmware(index.files[0], { fetchImpl, baseUrl: base });
+        expect(firmware).toEqual({ name: "trueglide_2026.6.2_STM32F405_SPEEDYBEEF405MINI.hex", text: hex });
+    });
+
+    it("refuse un fichier abîmé ou absent", async () => {
+        const abime = Buffer.from(hex.replace("F2", "F3"), "ascii");
+        const fetchImpl = fakeFetch({ [`${base}${entry.file}`]: gzipSync(abime) });
+        await expect(downloadFirmware(entry, { fetchImpl, baseUrl: base })).rejects.toThrow(/somme de contrôle/);
+        await expect(fetchFirmwareIndex({ fetchImpl, baseUrl: base })).rejects.toThrow(/404/);
+    });
+});

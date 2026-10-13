@@ -1,0 +1,11 @@
+<!--
+    TrueGlide Configurator - Copyright (C) 2026 TalkTrueFPV. Derived from Betaflight App.
+    Free software under the GPL-3.0 license, WITHOUT ANY WARRANTY; see the LICENSE file.
+-->
+<template>
+    <TrueGlideTab tab-name="tf_radio" title="tabTfRadio" :sections="['radiotlm']" />
+</template>
+
+<script setup>
+import TrueGlideTab from "./TrueGlideTab.vue";
+</script>
