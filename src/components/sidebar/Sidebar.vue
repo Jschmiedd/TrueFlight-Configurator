@@ -23,7 +23,7 @@
                     square
                     :aria-label="$t('sidebarOpenOptions')"
                     @click="optionsOpen = true"
-                    size="xs"
+                    :size="topbarActive ? 'lg' : 'xs'"
                 />
             </UTooltip>
             <UTooltip :text="$t('sidebarToggleDarkMode')" :delay-duration="300">
@@ -34,7 +34,7 @@
                     square
                     :aria-label="$t('sidebarToggleDarkMode')"
                     @click="toggleDarkMode"
-                    size="xs"
+                    :size="topbarActive ? 'lg' : 'xs'"
                 />
             </UTooltip>
             <UTooltip :text="$t('sidebarToggleExpertMode')" :delay-duration="300">
@@ -45,7 +45,7 @@
                     square
                     :aria-label="$t('sidebarToggleExpertMode')"
                     @click="toggleExpertMode"
-                    size="xs"
+                    :size="topbarActive ? 'lg' : 'xs'"
                 />
             </UTooltip>
             <UTooltip :text="$t('logActionShow')" :delay-duration="300">
@@ -56,7 +56,7 @@
                     square
                     :aria-label="$t('logActionShow')"
                     @click="logOpen = true"
-                    size="xs"
+                    :size="topbarActive ? 'lg' : 'xs'"
                     :class="{ 'mr-auto': !isCompact && !topbarActive }"
                 />
             </UTooltip>

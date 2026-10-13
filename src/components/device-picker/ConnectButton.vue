@@ -6,14 +6,14 @@
             color="error"
             variant="soft"
             icon="i-lucide-link-2-off"
-            size="sm"
+            :size="size"
             :loading="connecting"
             :title="disconnectLabel"
             @click="onDisconnectClick"
         >
             <span class="sidebar-connect__label">{{ disconnectLabel }}</span>
         </UButton>
-        <UFieldGroup v-else size="sm" orientation="horizontal" class="sidebar-connect__group w-full !flex">
+        <UFieldGroup v-else :size="size" orientation="horizontal" class="sidebar-connect__group w-full !flex">
             <UButton
                 class="sidebar-connect__main"
                 block
@@ -91,6 +91,8 @@ export default defineComponent({
     props: {
         // TrueGlide: in the top bar the port menu opens downwards
         menuSide: { type: String, default: "top" },
+        // TrueGlide: bigger button in the top bar
+        size: { type: String, default: "sm" },
     },
     setup() {
         const connectionStore = useConnectionStore();

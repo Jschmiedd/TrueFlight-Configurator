@@ -202,8 +202,7 @@ html:not(.dark) .tf-logo-sombre {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        text-align: justify;
-        text-align-last: center;
+        text-align: center;
     }
     .tf-intro {
         font-size: 15px;
