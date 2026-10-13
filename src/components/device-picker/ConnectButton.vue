@@ -11,28 +11,12 @@
                     color="neutral"
                     variant="outline"
                     size="md"
+                    icon="i-lucide-usb"
                     trailing-icon="i-lucide-chevrons-up-down"
                     class="tg-connect__select"
+                    :ui="{ leadingIcon: 'text-primary' }"
                     :disabled="isConnected || devicePickerDisabled"
                 >
-                    <template #leading>
-                        <!-- USB-C plug -->
-                        <svg
-                            class="tg-connect__usb"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <rect x="7" y="2" width="10" height="7" rx="3.5" />
-                            <path d="M10 5.5h4" />
-                            <path d="M6 9h12v5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z" />
-                            <path d="M12 17v5" />
-                        </svg>
-                    </template>
                     <span class="sidebar-connect__label">{{ portLabel }}</span>
                 </UButton>
             </UDropdownMenu>
@@ -59,7 +43,7 @@
         >
             <span class="tg-connect__circle">
                 <UIcon
-                    :name="connecting ? 'i-lucide-loader-circle' : isConnected ? 'i-lucide-unplug' : 'i-lucide-cable'"
+                    :name="connecting ? 'i-lucide-loader-circle' : isConnected ? 'i-lucide-power-off' : 'i-lucide-power'"
                     :class="{ 'animate-spin': connecting }"
                 />
             </span>
@@ -399,12 +383,6 @@ export default defineComponent({
 .tg-connect__select {
     width: 16rem;
     justify-content: space-between;
-}
-.tg-connect__usb {
-    width: 1.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
-    color: var(--ui-primary);
 }
 .tg-connect__round {
     display: flex;
